@@ -1,5 +1,6 @@
 package ru.yandex.practicum;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,21 +13,26 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class LionTest {
-    Lion lion;
     @Mock
     Feline felineMock;
     String lionSex;
+    Lion lion;
+    enum Type {POSITIVE, ALL}
+    Type type;
 
-    public LionTest (String lionSex) {
+    public LionTest(Type type, String lionSex){
+        this.type = type;
         this.lionSex = lionSex;
     }
 
     @Parameterized.Parameters
     public static Object[][] getDataEntry() {
         return new Object[][]{
-                {"Самец"},
-                {"Самка"},
-                {"Другое"},
+                {Type.POSITIVE, "Самец"},
+                {Type.POSITIVE, "Самка"},
+                {Type.ALL, "Самец"},
+                {Type.ALL, "Самка"},
+                {Type.ALL, "Другое"},
         };
     }
     @Before
@@ -35,46 +41,55 @@ public class LionTest {
     }
 
     @Test // Проверка, что метод feline.getKittens вызывается без параметров один раз
-    public void getKittensWithoutParameter() {
-        lion = new Lion(felineMock);
+    public void getKittensWithoutParameter() throws Exception {
+        Assume.assumeTrue(type == Type.POSITIVE);
+        lion = new Lion(felineMock, lionSex);
         lion.getKittens();
         Mockito.verify(felineMock, Mockito.times(1)).getKittens();
     }
     @Test // Проверка, что метод getKittens возвращает правильное количество котят(1)
-    public void getKittensReturnCount() {
-        lion = new Lion(felineMock);
+    public void getKittensReturnCount() throws Exception {
         int expected = 1;
+        Assume.assumeTrue(type == Type.POSITIVE);
+        lion = new Lion(felineMock, lionSex);
         Mockito.when(felineMock.getKittens()).thenReturn(1);
         int actual = lion.getKittens();
         assertEquals(expected, actual);
     }
     @Test // Возвращается корректное значение hasMane в зависимости от пола
     public void doesHaveMane() throws Exception {
-        String expectedException = "Используйте допустимые значения пола животного - самей или самка";
+        String expectedMessageErrorSex = "Используйте допустимые значения пола животного - самей или самка";
+        Assume.assumeTrue(type == Type.ALL);
         try {
-            lion = new Lion(lionSex);
+            lion = new Lion(felineMock, lionSex);
             if ("Самец".equals(lionSex)) {
                 assertTrue(lion.doesHaveMane());
             } else if ("Самка".equals(lionSex)) {
                 assertFalse(lion.doesHaveMane());
+            } else {
+                throw new Exception ("Отсутствует ошибка: " + expectedMessageErrorSex);
             }
-        } catch (Exception exception){
-            assertEquals(expectedException, exception.getMessage());
+        } catch (Exception exception) {
+            if (exception.getMessage().equals(expectedMessageErrorSex)) {
+            } else {
+                throw new Exception(exception.getMessage());
+            }
         }
     }
     @Test // Проверка, что метод getFood получает список еды для хищника
     public void getFoodForPredator() throws Exception {
-        lion = new Lion(felineMock);
+        Assume.assumeTrue(type == Type.POSITIVE);
         List<String> expected = List.of("Животные", "Птицы", "Рыба");
-        Mockito.when(felineMock.getFood("Хищник")).thenReturn(List.of("Животные", "Птицы", "Рыба"));
+        lion = new Lion(felineMock, lionSex);
+        Mockito.when(felineMock.getFood("Хищник")).thenReturn(expected);
         List<String> actual = lion.getFood();
         assertEquals(expected, actual);
     }
     @Test // Проверка, что метод getFood вызывает feline.getFood с параметром "Хищник" один раз
     public void getFoodWithoutParameter () throws Exception {
-        lion = new Lion(felineMock);
+        Assume.assumeTrue(type == Type.POSITIVE);
+        lion = new Lion(felineMock, lionSex);
         lion.getFood();
         Mockito.verify(felineMock, Mockito.times(1)).getFood("Хищник");
     }
-
 }

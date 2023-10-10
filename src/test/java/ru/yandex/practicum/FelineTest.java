@@ -13,6 +13,8 @@ public class FelineTest {
     @Spy
     Feline felineSpy;
     String animalType;
+    final List<String> EXPECTEDFOODFORPREDATOR = List.of("Животные", "Птицы", "Рыба");
+    final List<String> EXPECTEDFOODFORHERBIVORE = List.of("Трава", "Различные растения");
 
     public FelineTest(String animalType) {
         this.animalType = animalType;
@@ -39,24 +41,26 @@ public class FelineTest {
     }
     @Test // Метод eatMeat получает список еды для хищника из метода getFood
     public void eatMeatGetFoodForPredator() throws Exception {
-        List<String> expectedFoodForPredator = List.of("Животные", "Птицы", "Рыба");
         List<String> actualFoodForPredator = felineSpy.eatMeat();
-        assertEquals(expectedFoodForPredator, actualFoodForPredator);
+        assertEquals(EXPECTEDFOODFORPREDATOR, actualFoodForPredator);
     }
     @Test // Метод getFood получает список еды для хищника, травоядного и неизвестного значения
     public void getFoodReturnFood() throws Exception {
-        List<String> expectedFoodForPredator = List.of("Животные", "Птицы", "Рыба");
-        List<String> expectedFoodForHerbivore = List.of("Трава", "Различные растения");
-        String expectedException = "Неизвестный вид животного, используйте значение Травоядное или Хищник";
+        String expectedMessageErrorType = "Неизвестный вид животного, используйте значение Травоядное или Хищник";
         try {
             List<String> actualFood = felineSpy.getFood(animalType);
             if ("Травоядное".equals(animalType)) {
-                assertEquals(expectedFoodForHerbivore, actualFood);
+                assertEquals(EXPECTEDFOODFORHERBIVORE, actualFood);
             } else if ("Хищник".equals(animalType)) {
-                assertEquals(expectedFoodForPredator, actualFood);
+                assertEquals(EXPECTEDFOODFORPREDATOR, actualFood);
+            }  else {
+                throw new Exception ("Отсутствует ошибка: " + expectedMessageErrorType);
             }
         } catch (Exception exception) {
-            assertEquals(expectedException, exception.getMessage());
+            if (exception.getMessage().equals(expectedMessageErrorType)) {
+            } else {
+                throw new Exception(exception.getMessage());
+            }
         }
     }
     @Test // Метод getFamily вернул "Кошачьи"
