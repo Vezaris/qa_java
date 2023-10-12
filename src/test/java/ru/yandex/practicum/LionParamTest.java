@@ -12,29 +12,30 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
-public class LionTest {
+public class LionParamTest {
     @Mock
     Feline felineMock;
     String lionSex;
     Lion lion;
-    enum Type {POSITIVE, ALL}
+    boolean hasMane;
+    enum Type {POSITIVE, NEGATIVE}
     Type type;
 
-    public LionTest(Type type, String lionSex){
+    public LionParamTest(Type type, String lionSex, boolean hasMane){
         this.type = type;
         this.lionSex = lionSex;
+        this.hasMane = hasMane;
     }
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{index}: {0} - {1} - {2}")
     public static Object[][] getDataEntry() {
         return new Object[][]{
-                {Type.POSITIVE, "Самец"},
-                {Type.POSITIVE, "Самка"},
-                {Type.ALL, "Самец"},
-                {Type.ALL, "Самка"},
-                {Type.ALL, "Другое"},
+            {Type.POSITIVE, "Самец", true},
+            {Type.POSITIVE, "Самка", false},
+            {Type.NEGATIVE, "Другое", false},
         };
     }
+
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
@@ -49,31 +50,28 @@ public class LionTest {
     }
     @Test // Проверка, что метод getKittens возвращает правильное количество котят(1)
     public void getKittensReturnCount() throws Exception {
-        int expected = 1;
         Assume.assumeTrue(type == Type.POSITIVE);
+        int expected = 1;
         lion = new Lion(felineMock, lionSex);
         Mockito.when(felineMock.getKittens()).thenReturn(1);
         int actual = lion.getKittens();
         assertEquals(expected, actual);
     }
     @Test // Возвращается корректное значение hasMane в зависимости от пола
-    public void doesHaveMane() throws Exception {
-        String expectedMessageErrorSex = "Используйте допустимые значения пола животного - самей или самка";
-        Assume.assumeTrue(type == Type.ALL);
-        try {
+    public void getHasMane() throws Exception{
+        Assume.assumeTrue(type == Type.POSITIVE);
             lion = new Lion(felineMock, lionSex);
-            if ("Самец".equals(lionSex)) {
-                assertTrue(lion.doesHaveMane());
-            } else if ("Самка".equals(lionSex)) {
-                assertFalse(lion.doesHaveMane());
-            } else {
-                throw new Exception ("Отсутствует ошибка: " + expectedMessageErrorSex);
-            }
+            assertEquals(hasMane, lion.doesHaveMane());
+    }
+    @Test // Возвращается ожидаемое исключение
+    public void getExpectedErrorCreateObject() {
+        Assume.assumeTrue(type == Type.NEGATIVE);
+        String expectedErrorMessage = "Используйте допустимые значения пола животного - самей или самка";
+        try {
+            lion = new Lion(felineMock, "Другое");
+            throw new Exception("Отсутствует ожидаемая ошибка");
         } catch (Exception exception) {
-            if (exception.getMessage().equals(expectedMessageErrorSex)) {
-            } else {
-                throw new Exception(exception.getMessage());
-            }
+            assertEquals(expectedErrorMessage, exception.getMessage());
         }
     }
     @Test // Проверка, что метод getFood получает список еды для хищника
